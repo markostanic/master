@@ -1,0 +1,33 @@
+dags:
+  persistence:
+    enabled: false
+  gitSync:
+    enabled: true
+    repo: git@github.com:markostanic/airflow-dags.git
+    branch: main
+    subPath: "./dags"
+    sshKeySecret: airflow-dev-ssh-key-secret
+    depth: 10
+
+workers:
+  persistence:
+    size: 1Gi
+
+logs:
+  persistence:
+    size: 1Gi
+
+ingress:
+  web:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
+      nginx.ingress.kubernetes.io/use-proxy-protocol: "true"
+    hosts:
+      - name: apache-airflow.dev.minikube.com
+        tls:
+          enabled: true
+          secretName: apache-airflow-dev-tls

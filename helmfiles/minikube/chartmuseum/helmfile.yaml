@@ -1,0 +1,9 @@
+releases:
+  - name: chartmuseum
+    namespace: infrastructure
+    missingFileHandler: Error
+    kubeContext: minikube
+    version: 2.15.0
+    chart: chartmuseum/chartmuseum
+    values:
+      - ./values.yaml

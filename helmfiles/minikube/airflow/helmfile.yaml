@@ -1,0 +1,9 @@
+releases:
+  - name: apache-airflow
+    namespace: apache-airflow-dev
+    missingFileHandler: Error
+    kubeContext: minikube
+    version: 1.8.0
+    chart: apache-airflow/airflow
+    values:
+      - ./values.yaml

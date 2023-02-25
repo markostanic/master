@@ -1,0 +1,12 @@
+image:
+  tag: latest
+service:
+  ports:
+    - name: api
+      protocol: TCP
+      targetPort: 9324
+      port: 9324
+    - name: ui
+      protocol: TCP
+      targetPort: 9325
+      port: 9325

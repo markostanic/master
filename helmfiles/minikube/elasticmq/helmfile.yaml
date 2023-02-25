@@ -1,0 +1,9 @@
+releases:
+  - name: elasticmq
+    namespace: infrastructure
+    missingFileHandler: Error
+    kubeContext: minikube
+    version: 0.1.0
+    chart: chartmuseum-local/elasticmq-chart
+    values:
+      - ./values.yaml

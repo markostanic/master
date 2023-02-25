@@ -1,0 +1,9 @@
+releases:
+  - name: node-sqs-client
+    namespace: apps-dev
+    missingFileHandler: Error
+    kubeContext: minikube
+    version: 0.1.0
+    chart: chartmuseum-local/node-app-chart
+    values:
+      - ./values.yaml
