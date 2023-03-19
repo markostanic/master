@@ -1,0 +1,9 @@
+releases:
+  - name: keda
+    namespace: infrastructure
+    missingFileHandler: Error
+    kubeContext: minikube
+    version: 2.9.4
+    chart: kedacore/keda
+    values:
+      - ./values.yaml

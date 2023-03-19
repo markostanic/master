@@ -1,0 +1,26 @@
+apiVersion: v1
+entries:
+  elasticmq-chart:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2023-03-02T12:58:55.223664186+01:00"
+    description: A Helm chart for Kubernetes
+    digest: 37360a51d1982973a7b1680b8030f26a3043130741f1600ef23a0072952ea89f
+    name: elasticmq-chart
+    type: application
+    urls:
+    - charts/elasticmq-chart-0.1.0.tgz
+    version: 0.1.0
+  node-app-chart:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2023-03-02T18:39:19.363778991+01:00"
+    description: A Helm chart for Kubernetes
+    digest: 12f544a2a0e8cd24d51d6a598d458001b6eab279b22474fdb5b0bb3ef5213275
+    name: node-app-chart
+    type: application
+    urls:
+    - charts/node-app-chart-0.1.0.tgz
+    version: 0.1.0
+generated: "2023-03-02T18:39:19+01:00"
+serverInfo: {}

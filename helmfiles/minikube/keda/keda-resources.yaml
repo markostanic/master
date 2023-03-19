@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: apps-dev
+  name: test-secrets
+data:
+  AWS_ACCESS_KEY_ID: NjA5NjI5MDY1MzA2 # Required.
+  AWS_SECRET_ACCESS_KEY: YWRtaW4= # Required.
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-trigger-auth-aws-credentials
+  namespace: apps-dev
+spec:
+  secretTargetRef:
+  - parameter: awsAccessKeyID # Required.
+    name: test-secrets # Required.
+    key: AWS_ACCESS_KEY_ID # Required.
+  - parameter: awsSecretAccessKey # Required.
+    name: test-secrets # Required.
+    key: AWS_SECRET_ACCESS_KEY # Required.
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: aws-sqs-queue-scaledobject
+  namespace: apps-dev
+  labels:
+    app: node-sqs-client-node-app-chart
+    deploymentName: node-sqs-client-node-app-chart
+spec:
+  scaleTargetRef:
+    kind: Deployment
+    name: node-sqs-client-node-app-chart
+  minReplicaCount: 0 # We don't want pods if the queue is empty
+  maxReplicaCount: 5 # We don't want to have more than 5 replicas
+  pollingInterval: 10 # How frequently we should go for metrics (in seconds)
+  cooldownPeriod: 25 # How many seconds should we wait for downscale
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: keda-trigger-auth-aws-credentials
+      metadata:
+        queueURL: /000000000000/test
+        awsEndpoint: "http://elasticmq-elasticmq-chart.infrastructure:9324"
+        awsRegion: "eu-west-1"
+        queueLength: "300"
+        identityOwner: pod
