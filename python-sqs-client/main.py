@@ -26,13 +26,6 @@ sqs_resource = boto3.resource('sqs',
                               aws_access_key_id=settings.aws_access_key_id,
                               use_ssl=settings.use_ssl)
 
-sqs_client = boto3.client('sqs',
-                          endpoint_url=settings.sqs_base_url,
-                          region_name=settings.region_name,
-                          aws_secret_access_key=settings.aws_secret_access_key,
-                          aws_access_key_id=settings.aws_access_key_id,
-                          use_ssl=settings.use_ssl)
-
 
 def get_gueue(queue_name: str):
     try:
@@ -65,16 +58,15 @@ def create_queue(queue_name):
 @app.delete('/api/v1/queues/{queue_name}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 def delete_queue(queue_name):
     queue = get_gueue(queue_name)
-    sqs_client.delete_queue(QueueUrl=queue.url)
-    return JSONResponse(status_code=204, content=None)
+    queue.delete()
 
 
 @app.post('/api/v1/messages/generate', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 def generate_messages(queue: QueueInfo, number_of_messages: int = Query(alias='number-of-messages', default=0),
                       message_length: int = 10):
+    q = sqs_resource.Queue(queue.url)
     for _ in range(number_of_messages):
-        sqs_client.send_message(QueueUrl=queue.url, MessageBody=get_random_string(message_length))
-    return None
+        q.send_message(MessageBody=get_random_string(message_length))
 
 
 @app.post('/api/v1/queues/{queue_name}/messages/generate', status_code=status.HTTP_204_NO_CONTENT,
@@ -84,11 +76,9 @@ def generate_messages(queue_name, number_of_messages: int = Query(alias='number-
     queue = get_gueue(queue_name)
     for _ in range(number_of_messages):
         queue.send_message(MessageBody=get_random_string(message_length))
-    return None
 
 
 @app.patch('/api/v1/queues/{queue_name}/purge', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)
 def purge_queue(queue_name):
     queue = get_gueue(queue_name)
     queue.purge()
-    return None
