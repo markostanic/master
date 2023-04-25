@@ -3,7 +3,7 @@ releases:
     namespace: infrastructure
     missingFileHandler: Error
     kubeContext: minikube
-    version: 2.9.4
+    version: 2.10.1
     chart: kedacore/keda
     values:
       - ./values.yaml

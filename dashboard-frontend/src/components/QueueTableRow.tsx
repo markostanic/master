@@ -15,10 +15,9 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import QueueMenu from "./QueueMenu";
 import QueueService from "../services/QueueService";
-import { UpdateQueueContext } from "../App";
 import QueueContext from "../contexts/QueueContext";
 
-const QueueTableRow = ({ queue }: QueueProps) => {
+const QueueTableRow = ({ queue, selected, handleSelect }: QueueProps) => {
   const [open, setOpen] = useState(false);
 
   const queueName: string | undefined = useMemo(() => {
@@ -47,7 +46,11 @@ const QueueTableRow = ({ queue }: QueueProps) => {
 
   return (
     <>
-      <TableRow sx={{ "& > *": { borderBottom: "unset" } }}>
+      <TableRow
+        sx={{ "& > *": { borderBottom: "unset" } }}
+        selected={selected}
+        onClick={() => handleSelect(queue.url)}
+      >
         <TableCell>
           <IconButton
             aria-label="expand row"

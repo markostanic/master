@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field
-from typing import Union
 from dataclasses import dataclass
+from typing import Union
+
 
 @dataclass
-class QueueInfo():
-  url: str
-  attributes: Union[dict, None] = None
+class QueueInfo:
+    url: str
+    attributes: Union[dict, None] = None

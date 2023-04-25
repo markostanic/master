@@ -1,5 +1,5 @@
 releases:
-  - name: node-sqs-client
+  - name: node-test-app
     namespace: apps-dev
     missingFileHandler: Error
     kubeContext: minikube

@@ -10,6 +10,7 @@ import QueuesTable from "./components/QueuesTable";
 import Queue from "./models/Queue";
 import QueueService from "./services/QueueService";
 import QueueContext, { IQueueOperations } from "./contexts/QueueContext";
+import NewQueue from "./components/NewQueue";
 
 export const UpdateQueueContext = createContext<(queueName: string) => void>(
   () => {}
@@ -22,7 +23,7 @@ function App() {
     QueueService.getAllQueues().then((response) => {
       setQueues(response.data);
     });
-  }, [queues]);
+  }, []);
 
   const updateQueue = useCallback(
     (queueName: string) => {
@@ -63,6 +64,7 @@ function App() {
   return (
     <div className="App">
       <QueueContext.Provider value={queueOperations}>
+        <NewQueue />
         <QueuesTable queues={queues} />
       </QueueContext.Provider>
     </div>

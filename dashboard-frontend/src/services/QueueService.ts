@@ -28,12 +28,17 @@ const removeQueue = (queueName: string) => {
   return QueueClient.delete(`/queues/${queueName}`);
 };
 
+const createQueue = (queueName: string) => {
+  return QueueClient.post(`/queues/${queueName}`)
+} 
+
 const QueueService = {
   getAllQueues,
   addMessages,
   purgeQueue,
   getQueueByName,
   removeQueue,
+  createQueue
 };
 
 export default QueueService;
