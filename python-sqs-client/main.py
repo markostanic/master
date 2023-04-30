@@ -1,10 +1,10 @@
 from fastapi import FastAPI
-from config.settings import Settings
+from config.cors_settings import CorsSettings
 from fastapi.middleware.cors import CORSMiddleware
 from routers import sqs_router, k8s_router
 
 app = FastAPI()
-settings = Settings()
+settings = CorsSettings()
 
 app.add_middleware(
     CORSMiddleware,
