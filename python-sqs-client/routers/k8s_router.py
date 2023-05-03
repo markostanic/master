@@ -1,6 +1,6 @@
 from kubernetes import config, dynamic, client
 from kubernetes.client import api_client
-from fastapi import APIRouter
+from fastapi import APIRouter, Response
 from service.sqs_service import get_queue
 from dto.ScaleResource import ScaleResource
 from config.k8s_settings import K8sSettings
@@ -57,8 +57,8 @@ def create_scaled_object(scale_resource: ScaleResource):
                     },
                     "metadata": {
                         "queueURL": queue.url,
-                        "awsEndpoint": "http://elasticmq-elasticmq-chart.infrastructure:9324",
-                        "awsRegion": "eu-west-1",
+                        "awsEndpoint": k8s_settings.aws_sqs_endpoint,
+                        "awsRegion": k8s_settings.aws_region,
                         "queueLength": str(scale_resource.queue_length),
                         "identityOwner": "pod",
                     }
@@ -66,6 +66,8 @@ def create_scaled_object(scale_resource: ScaleResource):
             ]
         }
     }
-    r = api.create(scaled_object_manifest)
-    print(r)
-    
+    try:
+        r = api.create(scaled_object_manifest)
+        return JSONResponse(content=jsonable_encoder(r))
+    except Exception as e:
+        return Response(status_code=e.status, content=e.body)
