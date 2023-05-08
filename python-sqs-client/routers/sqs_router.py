@@ -29,7 +29,7 @@ def get_queue_by_id(queue_name):
 def create_queue(queue_name):
     response = sqs_resource.create_queue(QueueName=queue_name)
     queue_info = QueueInfo(response.url, response.attributes)
-    return JSONResponse(status_code=201, content=jsonable_encoder(queue_info))
+    return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(queue_info))
 
 
 @router.delete('/{queue_name}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)

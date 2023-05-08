@@ -1,19 +1,19 @@
 import Queue from "../models/Queue";
-import QueueClient from "./QueueClient";
+import ApiClient from "./ApiClient";
 
 const getAllQueues = () => {
-  return QueueClient.get<Queue[]>("/queues");
+  return ApiClient.get<Queue[]>("/queues");
 };
 
 const getQueueByName = (queueName: string) => {
-  return QueueClient.get<Queue>(`/queues/${queueName}`);
+  return ApiClient.get<Queue>(`/queues/${queueName}`);
 };
 
 const addMessages = (queueName: string, numberOfMessages: number) => {
   const queryParams = {
     "number-of-messages": numberOfMessages,
   };
-  return QueueClient.post(
+  return ApiClient.post(
     `/queues/${queueName}/messages/generate`,
     {},
     { params: queryParams }
@@ -21,15 +21,15 @@ const addMessages = (queueName: string, numberOfMessages: number) => {
 };
 
 const purgeQueue = (queueName: string) => {
-  return QueueClient.patch(`/queues/${queueName}/purge`);
+  return ApiClient.patch(`/queues/${queueName}/purge`);
 };
 
 const removeQueue = (queueName: string) => {
-  return QueueClient.delete(`/queues/${queueName}`);
+  return ApiClient.delete(`/queues/${queueName}`);
 };
 
 const createQueue = (queueName: string) => {
-  return QueueClient.post(`/queues/${queueName}`)
+  return ApiClient.post(`/queues/${queueName}`)
 } 
 
 const QueueService = {

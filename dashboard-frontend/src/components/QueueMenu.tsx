@@ -4,29 +4,30 @@ import { useCallback, useMemo, useState, useContext } from "react";
 import { QueueMenuProps } from "../props/QueueProps";
 import IconButton from "@mui/material/IconButton";
 import QueueService from "../services/QueueService";
-import { UpdateQueueContext } from "../App";
 import QueueContext from "../contexts/QueueContext";
+import CreateScalerDialog from "./CreateScalerDialog";
 
 const QueueMenu = ({ queueUrl, queueName }: QueueMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [scalerDialogIsOpen, setScalerDialogIsOpen] = useState<boolean>(false);
 
   const queueOperations = useContext(QueueContext);
 
-  const open = useMemo(() => {
+  const menuOpen = useMemo(() => {
     return Boolean(anchorEl);
   }, [anchorEl]);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const menuClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = useCallback(() => {
+  const menuClose = useCallback(() => {
     setAnchorEl(null);
   }, []);
 
   const removeQueue = useCallback(() => {
     queueName &&
-      QueueService.removeQueue(queueName).then((response) => {
+      QueueService.removeQueue(queueName).then((_response) => {
         queueOperations.removeQueue(queueUrl);
         setAnchorEl(null);
       });
@@ -38,30 +39,42 @@ const QueueMenu = ({ queueUrl, queueName }: QueueMenuProps) => {
 
   const purgeQueue = useCallback(() => {
     queueName &&
-      QueueService.purgeQueue(queueName).then((response) => {
+      QueueService.purgeQueue(queueName).then((_response) => {
         queueOperations.updateQueue(queueName);
       });
     setAnchorEl(null);
   }, [queueName]);
 
+  const openDialog = useCallback(() => {
+    setScalerDialogIsOpen(true);
+    menuClose();
+  }, []);
+
   return (
     <>
-      <IconButton onClick={handleClick}>
+      <IconButton onClick={menuClick}>
         <MoreVertIcon />
       </IconButton>
       <Menu
         anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
+        open={menuOpen}
+        onClose={menuClose}
         MenuListProps={{
           "aria-labelledby": "basic-button",
         }}
       >
         <MenuItem onClick={addMessage}>Add more messages</MenuItem>
         <MenuItem onClick={purgeQueue}>Purge queue</MenuItem>
-        <MenuItem onClick={addMessage}>Create scaler</MenuItem>
+        <MenuItem onClick={openDialog}>Create scaler</MenuItem>
         <MenuItem onClick={removeQueue}>Remove</MenuItem>
       </Menu>
+      {queueName && (
+        <CreateScalerDialog
+          queueName={queueName}
+          open={scalerDialogIsOpen}
+          closeDialog={() => setScalerDialogIsOpen(false)}
+        />
+      )}
     </>
   );
 };

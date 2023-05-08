@@ -48,7 +48,7 @@ const QueueTableRow = ({ queue, selected, handleSelect }: QueueProps) => {
     <>
       <TableRow
         sx={{ "& > *": { borderBottom: "unset" } }}
-        selected={selected}
+        // selected={selected}
         onClick={() => handleSelect(queue.url)}
       >
         <TableCell>
