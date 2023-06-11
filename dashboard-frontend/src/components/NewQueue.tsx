@@ -4,13 +4,17 @@ import {
   AccordionDetails,
   Typography,
   TextField,
-  Button,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { useCallback, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import QueueService from "../services/QueueService";
+import QueueContext from "../contexts/QueueContext";
+import SnackbarNotificationContext from "../contexts/SnackbarContext";
 
 const NewQueue = () => {
+  const queueOperations = useContext(QueueContext);
+  const SnackbarNotification = useContext(SnackbarNotificationContext);
+
   const [queueName, setQueueName] = useState<string>("");
   const [error, setError] = useState<boolean>(false);
 
@@ -22,7 +26,23 @@ const NewQueue = () => {
         setError(true);
         return;
       }
-      QueueService.createQueue(queueName).then((_) => setQueueName(""));
+      QueueService.createQueue(queueName)
+        .then((response) => {
+          setQueueName("");
+          queueOperations.addQueue(response.data);
+          SnackbarNotification.setAlert({
+            shown: true,
+            severity: "info",
+            message: "Queue successfully created",
+          });
+        })
+        .catch((error) => {
+          SnackbarNotification.setAlert({
+            shown: true,
+            severity: "error",
+            message: error.response.data.message,
+          });
+        });
     },
     [queueName]
   );

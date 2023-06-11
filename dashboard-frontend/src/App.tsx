@@ -1,5 +1,5 @@
 import {
-  createContext,
+  SyntheticEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -10,20 +10,42 @@ import QueuesTable from "./components/QueuesTable";
 import Queue from "./models/Queue";
 import QueueService from "./services/QueueService";
 import QueueContext, { IQueueOperations } from "./contexts/QueueContext";
+import SnackbarContent, {
+  SnackbarNotification,
+} from "./contexts/SnackbarContext";
 import NewQueue from "./components/NewQueue";
-
-export const UpdateQueueContext = createContext<(queueName: string) => void>(
-  () => {}
-);
+import { Alert, AlertColor, Snackbar } from "@mui/material";
+import AlertState from "./models/AlertState";
 
 function App() {
   const [queues, setQueues] = useState<Queue[]>([]);
+
+  const [alert, setAlert] = useState<AlertState>({
+    shown: false,
+    severity: "info",
+    message: "",
+  });
 
   useEffect(() => {
     QueueService.getAllQueues().then((response) => {
       setQueues(response.data);
     });
   }, []);
+
+  const closeSnackbar = (
+    _event: Event | SyntheticEvent<any, Event>,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setAlert((prevState) => {
+      return {
+        ...prevState,
+        shown: false,
+      };
+    });
+  };
 
   const updateQueue = useCallback(
     (queueName: string) => {
@@ -39,16 +61,18 @@ function App() {
 
   const removeQueue = useCallback(
     (queueUrl: string) => {
-      const updated = queues.filter((queue) => queue.url !== queueUrl);
-      setQueues(updated);
+      setQueues((prevState) => {
+        return prevState.filter((queue) => queue.url !== queueUrl);
+      });
     },
     [queues]
   );
 
   const addQueue = useCallback(
     (queue: Queue) => {
-      const updated = [...queues, queue];
-      setQueues(updated);
+      setQueues((prevState) => {
+        return [...prevState, queue];
+      });
     },
     [queues]
   );
@@ -61,11 +85,27 @@ function App() {
     };
   }, [queues]);
 
+  const snackbarOperations: SnackbarNotification = useMemo(() => {
+    return {
+      setAlert,
+    };
+  }, [alert]);
+
   return (
     <div className="App">
       <QueueContext.Provider value={queueOperations}>
-        <NewQueue />
-        <QueuesTable queues={queues} />
+        <SnackbarContent.Provider value={snackbarOperations}>
+          <NewQueue />
+          <QueuesTable queues={queues} />
+
+          <Snackbar
+            open={alert.shown}
+            autoHideDuration={3000}
+            onClose={closeSnackbar}
+          >
+            <Alert severity={alert.severity}>{alert.message}</Alert>
+          </Snackbar>
+        </SnackbarContent.Provider>
       </QueueContext.Provider>
     </div>
   );

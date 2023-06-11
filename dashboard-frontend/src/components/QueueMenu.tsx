@@ -5,11 +5,13 @@ import { QueueMenuProps } from "../props/QueueProps";
 import IconButton from "@mui/material/IconButton";
 import QueueService from "../services/QueueService";
 import QueueContext from "../contexts/QueueContext";
-import CreateScalerDialog from "./CreateScalerDialog";
+import CreateScalerDialog from "./dialogs/ScalerDialog";
+import RemoveQueueDialog from "./dialogs/RemoveQueueDialog";
 
 const QueueMenu = ({ queueUrl, queueName }: QueueMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [scalerDialogIsOpen, setScalerDialogIsOpen] = useState<boolean>(false);
+  const [removeDialogIsOpen, setRemoveDialogIsOpen] = useState<boolean>(false);
 
   const queueOperations = useContext(QueueContext);
 
@@ -66,14 +68,22 @@ const QueueMenu = ({ queueUrl, queueName }: QueueMenuProps) => {
         <MenuItem onClick={addMessage}>Add more messages</MenuItem>
         <MenuItem onClick={purgeQueue}>Purge queue</MenuItem>
         <MenuItem onClick={openDialog}>Create scaler</MenuItem>
-        <MenuItem onClick={removeQueue}>Remove</MenuItem>
+        <MenuItem onClick={() => setRemoveDialogIsOpen(true)}>Remove</MenuItem>
       </Menu>
       {queueName && (
-        <CreateScalerDialog
-          queueName={queueName}
-          open={scalerDialogIsOpen}
-          closeDialog={() => setScalerDialogIsOpen(false)}
-        />
+        <>
+          <CreateScalerDialog
+            queueName={queueName}
+            open={scalerDialogIsOpen}
+            closeDialog={() => setScalerDialogIsOpen(false)}
+          />
+          <RemoveQueueDialog
+            queueName={queueName}
+            open={removeDialogIsOpen}
+            closeDialog={() => setRemoveDialogIsOpen(false)}
+            removeQueue={removeQueue}
+          />
+        </>
       )}
     </>
   );

@@ -9,44 +9,28 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
-import { ScaledObjectPayload } from "../models/ScaledObjectPayload";
+import { ScaledObjectPayload } from "../../models/ScaledObjectPayload";
 import {
   useCallback,
   useState,
   useMemo,
   useEffect,
   SetStateAction,
-  SyntheticEvent,
+  useContext,
 } from "react";
-import K8sService from "../services/K8sService";
+import K8sService from "../../services/K8sService";
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Alert,
-  AlertColor,
-  Snackbar,
   Stack,
   Tooltip,
 } from "@mui/material";
+import SnackbarNotificationContext from "../../contexts/SnackbarContext";
+import DialogProps from "../../models/DialogProps";
+import ScaledObjectContext from "../../contexts/ScaledObjectContext";
 
-interface ScalerDialogProps {
-  queueName: string;
-  open: boolean;
-  closeDialog: () => void;
-}
-
-interface AlertState {
-  shown: boolean;
-  severity: AlertColor;
-  message: string;
-}
-
-const CreateScalerDialog = ({
-  queueName,
-  open,
-  closeDialog,
-}: ScalerDialogProps) => {
+const CreateScalerDialog = ({ queueName, open, closeDialog }: DialogProps) => {
   const [namespaces, setNamespaces] = useState<string[]>([]);
   const [selectedNamespace, setSelectedNamespace] = useState<string>("");
   const [deployments, setDeployments] = useState<string[]>([]);
@@ -57,28 +41,48 @@ const CreateScalerDialog = ({
   const [cooldownPeriod, setCooldownperiod] = useState<number>(25);
   const [queueLength, setQueueLength] = useState<number>(1);
 
-  const [alert, setAlert] = useState<AlertState>({
-    shown: false,
-    severity: "info",
-    message: "",
-  });
+  const scaledObjectContext = useContext(ScaledObjectContext);
+
+  const [scaledObjectExists, setScaledObjectExists] = useState<boolean>(false);
+
+  const SnackbarNotification = useContext(SnackbarNotificationContext);
 
   useEffect(() => {
     if (open) {
-      const fetchData = async () => {
-        setNamespaces((await K8sService.getNamespaces()).data);
-      };
-      fetchData();
+      K8sService.getScaledObject(`${queueName}-scaled-object`)
+        .then((response) => {
+          setScaledObjectExists(true);
+          setNamespaces([response.data.namespace]);
+          setDeployments([response.data.deployment]);
+          setSelectedNamespace(response.data.namespace);
+          setSelectedDeployment(response.data.deployment);
+          setMinReplicas(response.data.minReplicas);
+          setMaxReplicas(response.data.maxReplicas);
+          setPollingInterval(response.data.pollingInterval);
+          setCooldownperiod(response.data.cooldownPeriod);
+          setQueueLength(response.data.cooldownPeriod);
+        })
+        .catch((_error) => {
+          setScaledObjectExists(false);
+          setSelectedDeployment("");
+          setSelectedNamespace("");
+
+          K8sService.getNamespaces().then((responseNamespaces) => {
+            setNamespaces(responseNamespaces.data);
+          });
+        });
     }
-  }, [open]);
+  }, [open, queueName]);
 
   useEffect(() => {
-    if (selectedNamespace) {
-      K8sService.getDeployments(selectedNamespace).then((response) => {
-        setDeployments(response.data);
-      });
+    if (!scaledObjectExists && open) {
+      K8sService.getDeployments(selectedNamespace).then(
+        (responseDeployments) => {
+          setDeployments(responseDeployments.data);
+        }
+      );
     }
-  }, [selectedNamespace]);
+  }, [selectedNamespace, scaledObjectExists]);
 
   const selectChange = useCallback(
     (
@@ -115,38 +119,56 @@ const CreateScalerDialog = ({
       cooldownPeriod,
       queueLength
     );
-    K8sService.createScaledObject(payload)
-      .then((response) => {
-        closeDialog();
-        setAlert({
-          shown: true,
-          severity: "info",
-          message: "ScaledObject successfully created",
-        });
-      })
-      .catch((error) => {
-        setAlert({
-          shown: true,
-          severity: "error",
-          message: error.response.data.message,
-        });
-      });
-  }, []);
 
-  const closeSnackbar = (
-    _event: Event | SyntheticEvent<any, Event>,
-    reason?: string
-  ) => {
-    if (reason === "clickaway") {
-      return;
+    if (scaledObjectExists) {
+      console.log(payload);
+      K8sService.patchScaledObject(payload)
+        .then((_response) => {
+          closeDialog();
+          SnackbarNotification.setAlert({
+            shown: true,
+            severity: "info",
+            message: "ScaledObject successfully patched",
+          });
+        })
+        .catch((error) => {
+          SnackbarNotification.setAlert({
+            shown: true,
+            severity: "error",
+            message: error.response.data.message,
+          });
+        });
+    } else {
+      K8sService.createScaledObject(payload)
+        .then((createdScaledObjectResponse) => {
+          scaledObjectContext?.setScaledObject(
+            createdScaledObjectResponse.data
+          );
+          closeDialog();
+          SnackbarNotification.setAlert({
+            shown: true,
+            severity: "info",
+            message: "ScaledObject successfully created",
+          });
+        })
+        .catch((error) => {
+          SnackbarNotification.setAlert({
+            shown: true,
+            severity: "error",
+            message: error.response.data.message,
+          });
+        });
     }
-    setAlert((prevState) => {
-      return {
-        ...prevState,
-        shown: false,
-      };
-    });
-  };
+  }, [
+    selectedDeployment,
+    selectedNamespace,
+    scaledObjectExists,
+    minReplicas,
+    maxReplicas,
+    pollingInterval,
+    cooldownPeriod,
+    queueLength,
+  ]);
 
   return (
     <>
@@ -154,14 +176,15 @@ const CreateScalerDialog = ({
         <DialogTitle>Create KEDA ScaledObject</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            To subscribe to this website, please enter your email address here.
-            We will send updates occasionally.
+            To create this resource, first select namespace and deployment.
+            There are base and additional parameters to set
           </DialogContentText>
           <form onSubmit={submitForm}>
             <FormControl fullWidth margin="normal">
               <InputLabel>Namespace</InputLabel>
               <Select
                 value={selectedNamespace}
+                disabled={scaledObjectExists}
                 label="Namespace"
                 onChange={(e) => selectChange(e, setSelectedNamespace)}
               >
@@ -173,6 +196,7 @@ const CreateScalerDialog = ({
                 <InputLabel>Deployment</InputLabel>
                 <Select
                   value={selectedDeployment}
+                  disabled={scaledObjectExists}
                   label="Deployment"
                   onChange={(e) => selectChange(e, setSelectedDeployment)}
                 >
@@ -188,6 +212,11 @@ const CreateScalerDialog = ({
                   value={minReplicas}
                   onChange={(e) => setMinReplicas(+e.target.value)}
                   label="Min replicas"
+                  InputProps={{
+                    inputProps: {
+                      min: 0,
+                    },
+                  }}
                 />
                 <TextField
                   fullWidth
@@ -195,6 +224,11 @@ const CreateScalerDialog = ({
                   value={maxReplicas}
                   onChange={(e) => setMaxReplicas(+e.target.value)}
                   label="Max replicas"
+                  InputProps={{
+                    inputProps: {
+                      min: 0,
+                    },
+                  }}
                 />
                 <Tooltip
                   title="Number of messages one instance can handle"
@@ -206,6 +240,11 @@ const CreateScalerDialog = ({
                     value={queueLength}
                     onChange={(e) => setQueueLength(+e.target.value)}
                     label="Queue length"
+                    InputProps={{
+                      inputProps: {
+                        min: 0,
+                      },
+                    }}
                   />
                 </Tooltip>
               </Stack>
@@ -251,13 +290,6 @@ const CreateScalerDialog = ({
           <Button onClick={submitForm}>Submit</Button>
         </DialogActions>
       </Dialog>
-      <Snackbar
-        open={alert.shown}
-        autoHideDuration={3000}
-        onClose={closeSnackbar}
-      >
-        <Alert severity={alert.severity}>{alert.message}</Alert>
-      </Snackbar>
     </>
   );
 };

@@ -1,9 +1,10 @@
 from typing import List
 
-from fastapi import Query, status, Response, APIRouter, Depends
+from fastapi import Query, status, Response, APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
+from dto.ErrorMesasge import ErrorMessage
 from service.sqs_service import get_queue, sqs_resource
 from helpers.RandomGenerator import get_random_string
 from model.QueueInfo import QueueInfo
@@ -27,9 +28,14 @@ def get_queue_by_id(queue_name):
 # TODO: Add queue attributes in request body
 @router.post('/{queue_name}')
 def create_queue(queue_name):
-    response = sqs_resource.create_queue(QueueName=queue_name)
-    queue_info = QueueInfo(response.url, response.attributes)
-    return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(queue_info))
+    try:
+        sqs_resource.get_queue_by_name(QueueName=queue_name)
+        return JSONResponse(status_code=status.HTTP_409_CONFLICT, content=jsonable_encoder(ErrorMessage(f"Queue with name {queue_name} already exists")))
+    except Exception as e:
+        response = sqs_resource.create_queue(QueueName=queue_name)
+        print(e)
+        queue_info = QueueInfo(response.url, response.attributes)
+        return JSONResponse(status_code=status.HTTP_201_CREATED, content=jsonable_encoder(queue_info))
 
 
 @router.delete('/{queue_name}', status_code=status.HTTP_204_NO_CONTENT, response_class=Response)

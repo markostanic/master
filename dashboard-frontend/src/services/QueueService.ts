@@ -1,3 +1,5 @@
+import { AxiosResponse } from "axios";
+import ErrorMessage from "../models/ErrorResponse";
 import Queue from "../models/Queue";
 import ApiClient from "./ApiClient";
 
@@ -29,8 +31,8 @@ const removeQueue = (queueName: string) => {
 };
 
 const createQueue = (queueName: string) => {
-  return ApiClient.post(`/queues/${queueName}`)
-} 
+  return ApiClient.post<Queue>(`/queues/${queueName}`);
+};
 
 const QueueService = {
   getAllQueues,
@@ -38,7 +40,7 @@ const QueueService = {
   purgeQueue,
   getQueueByName,
   removeQueue,
-  createQueue
+  createQueue,
 };
 
 export default QueueService;

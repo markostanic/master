@@ -9,7 +9,6 @@ import {
 } from "@mui/material";
 import Queue from "../models/Queue";
 import QueueTableRow from "./QueueTableRow";
-import { useState, useCallback } from "react";
 
 interface QueuesTableProps {
   queues: Queue[];
@@ -18,15 +17,6 @@ interface QueuesTableProps {
 const QueuesTable: React.FC<QueuesTableProps> = ({
   queues,
 }: QueuesTableProps) => {
-  const [selected, setSelected] = useState<string | null>();
-
-  const handleSelect = useCallback(
-    (queueUrl: string) => {
-      queueUrl === selected ? setSelected(null) : setSelected(queueUrl);
-    },
-    [selected]
-  );
-
   return (
     <>
       <TableContainer component={Paper}>
@@ -39,18 +29,22 @@ const QueuesTable: React.FC<QueuesTableProps> = ({
               <TableCell>Messages delayed</TableCell>
               <TableCell>Messages not visible</TableCell>
               <TableCell>Add messages</TableCell>
-              <TableCell>More</TableCell>
+              <TableCell>Scaled</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {queues.map((queue) => (
-              <QueueTableRow
-                key={queue.url}
-                queue={queue}
-                selected={queue.url === selected}
-                handleSelect={handleSelect}
-              />
-            ))}
+            {queues.length > 0 ? (
+              queues.map((queue) => (
+                <QueueTableRow key={queue.url} queue={queue} />
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  There are no queues at the moment.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
