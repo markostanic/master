@@ -42,47 +42,38 @@ const CreateScalerDialog = ({ queueName, open, closeDialog }: DialogProps) => {
   const [queueLength, setQueueLength] = useState<number>(1);
 
   const scaledObjectContext = useContext(ScaledObjectContext);
-
-  const [scaledObjectExists, setScaledObjectExists] = useState<boolean>(false);
-
   const SnackbarNotification = useContext(SnackbarNotificationContext);
 
   useEffect(() => {
     if (open) {
-      K8sService.getScaledObject(`${queueName}-scaled-object`)
-        .then((response) => {
-          setScaledObjectExists(true);
-          setNamespaces([response.data.namespace]);
-          setDeployments([response.data.deployment]);
-          setSelectedNamespace(response.data.namespace);
-          setSelectedDeployment(response.data.deployment);
-          setMinReplicas(response.data.minReplicas);
-          setMaxReplicas(response.data.maxReplicas);
-          setPollingInterval(response.data.pollingInterval);
-          setCooldownperiod(response.data.cooldownPeriod);
-          setQueueLength(response.data.cooldownPeriod);
-        })
-        .catch((_error) => {
-          setScaledObjectExists(false);
-          setSelectedDeployment("");
-          setSelectedNamespace("");
-
-          K8sService.getNamespaces().then((responseNamespaces) => {
-            setNamespaces(responseNamespaces.data);
-          });
+      if (scaledObjectContext?.scaledObject) {
+        const scaledObject = scaledObjectContext.scaledObject;
+        setNamespaces([scaledObject.namespace]);
+        setDeployments([scaledObject.deployment]);
+        setSelectedNamespace(scaledObject.namespace);
+        setSelectedDeployment(scaledObject.deployment);
+        setMinReplicas(scaledObject.minReplicas);
+        setMaxReplicas(scaledObject.maxReplicas);
+        setPollingInterval(scaledObject.pollingInterval);
+        setCooldownperiod(scaledObject.cooldownPeriod);
+        setQueueLength(scaledObject.cooldownPeriod);
+      } else {
+        K8sService.getNamespaces().then((responseNamespaces) => {
+          setNamespaces(responseNamespaces.data);
         });
+      }
     }
-  }, [open, queueName]);
+  }, [open, queueName, scaledObjectContext?.scaledObject]);
 
   useEffect(() => {
-    if (!scaledObjectExists && open) {
+    if (!scaledObjectContext?.scaledObject && open && selectedNamespace) {
       K8sService.getDeployments(selectedNamespace).then(
         (responseDeployments) => {
           setDeployments(responseDeployments.data);
         }
       );
     }
-  }, [selectedNamespace, scaledObjectExists]);
+  }, [selectedNamespace, scaledObjectContext, open]);
 
   const selectChange = useCallback(
     (
@@ -120,8 +111,7 @@ const CreateScalerDialog = ({ queueName, open, closeDialog }: DialogProps) => {
       queueLength
     );
 
-    if (scaledObjectExists) {
-      console.log(payload);
+    if (scaledObjectContext?.scaledObject) {
       K8sService.patchScaledObject(payload)
         .then((_response) => {
           closeDialog();
@@ -140,10 +130,8 @@ const CreateScalerDialog = ({ queueName, open, closeDialog }: DialogProps) => {
         });
     } else {
       K8sService.createScaledObject(payload)
-        .then((createdScaledObjectResponse) => {
-          scaledObjectContext?.setScaledObject(
-            createdScaledObjectResponse.data
-          );
+        .then((_createdScaledObjectResponse) => {
+          scaledObjectContext?.setScaledObject(payload);
           closeDialog();
           SnackbarNotification.setAlert({
             shown: true,
@@ -162,7 +150,7 @@ const CreateScalerDialog = ({ queueName, open, closeDialog }: DialogProps) => {
   }, [
     selectedDeployment,
     selectedNamespace,
-    scaledObjectExists,
+    scaledObjectContext,
     minReplicas,
     maxReplicas,
     pollingInterval,
@@ -184,7 +172,7 @@ const CreateScalerDialog = ({ queueName, open, closeDialog }: DialogProps) => {
               <InputLabel>Namespace</InputLabel>
               <Select
                 value={selectedNamespace}
-                disabled={scaledObjectExists}
+                disabled={!!scaledObjectContext?.scaledObject}
                 label="Namespace"
                 onChange={(e) => selectChange(e, setSelectedNamespace)}
               >
@@ -196,7 +184,7 @@ const CreateScalerDialog = ({ queueName, open, closeDialog }: DialogProps) => {
                 <InputLabel>Deployment</InputLabel>
                 <Select
                   value={selectedDeployment}
-                  disabled={scaledObjectExists}
+                  disabled={!!scaledObjectContext?.scaledObject}
                   label="Deployment"
                   onChange={(e) => selectChange(e, setSelectedDeployment)}
                 >

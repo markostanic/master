@@ -12,12 +12,9 @@ from dto.ScaleResource import ScaleResource
 from service.sqs_service import get_queue
 
 router = APIRouter(prefix="/api/v1/k8s", tags=["k8s"])
-
 config.load_kube_config(context="minikube")
-
 api_client = ApiClient(configuration=config.load_kube_config(context="minikube"))
 dynamic_client = dynamic.DynamicClient(api_client)
-
 k8s_settings = K8sSettings()
 
 

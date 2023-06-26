@@ -7,6 +7,7 @@ import QueueService from "../services/QueueService";
 import QueueContext from "../contexts/QueueContext";
 import CreateScalerDialog from "./dialogs/ScalerDialog";
 import RemoveQueueDialog from "./dialogs/RemoveQueueDialog";
+import ScaledObjectContext from "../contexts/ScaledObjectContext";
 
 const QueueMenu = ({ queueUrl, queueName }: QueueMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -14,6 +15,7 @@ const QueueMenu = ({ queueUrl, queueName }: QueueMenuProps) => {
   const [removeDialogIsOpen, setRemoveDialogIsOpen] = useState<boolean>(false);
 
   const queueOperations = useContext(QueueContext);
+  const scaledObjectContext = useContext(ScaledObjectContext);
 
   const menuOpen = useMemo(() => {
     return Boolean(anchorEl);
@@ -67,7 +69,11 @@ const QueueMenu = ({ queueUrl, queueName }: QueueMenuProps) => {
       >
         <MenuItem onClick={addMessage}>Add more messages</MenuItem>
         <MenuItem onClick={purgeQueue}>Purge queue</MenuItem>
-        <MenuItem onClick={openDialog}>Create scaler</MenuItem>
+        <MenuItem onClick={openDialog}>
+          {scaledObjectContext?.scaledObject
+            ? "Edit Scaled Object"
+            : "Create Scaled Object"}
+        </MenuItem>
         <MenuItem onClick={() => setRemoveDialogIsOpen(true)}>Remove</MenuItem>
       </Menu>
       {queueName && (

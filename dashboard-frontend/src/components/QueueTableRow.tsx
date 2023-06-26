@@ -30,18 +30,25 @@ import ScaledObjectContext from "../contexts/ScaledObjectContext";
 import { ScaledObjectPayload } from "../models/ScaledObjectPayload";
 
 const QueueTableRow = ({ queue }: QueueProps) => {
+  /**
+   * TableRow State
+   */
   const [open, setOpen] = useState(false);
   const [scaledObject, setScaledObject] = useState<
     ScaledObjectPayload | undefined
   >();
+  const [messages, setMessages] = useState<number | undefined>(undefined);
+  const [hpa, setHpa] = useState<Hpa | undefined>();
+
+  const queueOperations = useContext(QueueContext);
+
+  /**
+   * TableRow Memo
+   */
 
   const queueName: string | undefined = useMemo(() => {
     return queue.url.split("/").pop();
   }, []);
-
-  const [messages, setMessages] = useState<number | undefined>(undefined);
-
-  const [hpa, setHpa] = useState<Hpa | undefined>();
 
   const progressValue = useMemo(() => {
     if (!hpa) return 0;
@@ -49,34 +56,37 @@ const QueueTableRow = ({ queue }: QueueProps) => {
     return value;
   }, [hpa]);
 
-  const queueOperations = useContext(QueueContext);
+  /**
+   * Component Lifecycle
+   */
 
   useEffect(() => {
-    console.log(scaledObject);
-    if (scaledObject && queueName) {
-      console.log(scaledObject);
-      const intervalId = setInterval(() => {
-        // Your periodic task logic here
-        console.log("Running periodic task...");
-
+    if (scaledObject?.namespace && queueName) {
+      const fetchHpaData = () => {
         K8sService.getHpa(scaledObject.namespace, queueName)
           .then((response) => setHpa(response.data))
           .catch((_error) => {
+            setScaledObject(undefined);
             setHpa(undefined);
           });
-      }, 5000);
+      };
+      fetchHpaData();
+      const intervalId = setInterval(fetchHpaData, 5000);
       return () => {
         clearInterval(intervalId);
       };
     }
-  }, [scaledObject]);
+  }, [scaledObject, queueName]);
 
   useEffect(() => {
-    K8sService.getScaledObject(`${queueName}-scaled-object`).then(
-      (response) => {
+    K8sService.getScaledObject(`${queueName}-scaled-object`)
+      .then((response) => {
         setScaledObject(response.data);
-      }
-    );
+      })
+      .catch((_error) => {
+        setScaledObject(undefined);
+        setHpa(undefined);
+      });
   }, [queueName]);
 
   const addMessages = useCallback(() => {

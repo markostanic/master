@@ -1,5 +1,6 @@
 import {
   SyntheticEvent,
+  createContext,
   useCallback,
   useEffect,
   useMemo,
@@ -84,6 +85,8 @@ function App() {
       addQueue,
     };
   }, [queues]);
+
+  const QueueContext = createContext<IQueueOperations>(queueOperations);
 
   const snackbarOperations: SnackbarNotification = useMemo(() => {
     return {
